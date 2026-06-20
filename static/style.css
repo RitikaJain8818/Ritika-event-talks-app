@@ -951,3 +951,131 @@ footer {
         gap: 0.75rem;
     }
 }
+
+/* Light Mode Overrides */
+body.light-mode {
+    --bg-base: #f1f5f9; /* Slate 100 */
+    --bg-surface: #ffffff;
+    --bg-surface-glass: rgba(255, 255, 255, 0.7);
+    --border-color: rgba(15, 23, 42, 0.08);
+    --border-color-hover: rgba(99, 102, 241, 0.5);
+    
+    --text-primary: #0f172a; /* Slate 900 */
+    --text-secondary: #475569; /* Slate 600 */
+    --text-muted: #94a3b8; /* Slate 400 */
+    
+    --accent-indigo-glow: rgba(99, 102, 241, 0.12);
+    --accent-purple-glow: rgba(168, 85, 247, 0.12);
+    
+    background-image: 
+        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.06) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.06) 0px, transparent 50%);
+}
+
+body.light-mode header h1 {
+    background: linear-gradient(135deg, #0f172a, #334155);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+body.light-mode .search-input,
+body.light-mode .sort-select {
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    color: #0f172a;
+}
+
+body.light-mode .search-input:focus,
+body.light-mode .sort-select:focus {
+    background: #ffffff;
+    border-color: var(--accent-indigo);
+}
+
+body.light-mode .filter-badge {
+    background: rgba(0, 0, 0, 0.02);
+    border-color: rgba(0, 0, 0, 0.08);
+    color: #475569;
+}
+
+body.light-mode .filter-badge:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: #0f172a;
+}
+
+body.light-mode .custom-checkbox {
+    background: rgba(255, 255, 255, 0.8);
+    border-color: rgba(15, 23, 42, 0.25);
+}
+
+body.light-mode .release-description code {
+    background: rgba(15, 23, 42, 0.05);
+    color: #db2777; /* pink 600 */
+}
+
+body.light-mode .skeleton-card {
+    background: rgba(255, 255, 255, 0.7);
+    border-color: rgba(15, 23, 42, 0.06);
+}
+
+body.light-mode .skeleton-checkbox {
+    background: rgba(0, 0, 0, 0.04);
+}
+
+body.light-mode .skeleton-line {
+    background: linear-gradient(90deg, rgba(0, 0, 0, 0.03) 25%, rgba(0, 0, 0, 0.08) 50%, rgba(0, 0, 0, 0.03) 75%);
+    background-size: 200% 100%;
+}
+
+body.light-mode .tweet-panel {
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: -10px 0 30px rgba(15, 23, 42, 0.15);
+    border-left: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+body.light-mode .tweet-panel-title {
+    color: #0f172a;
+}
+
+body.light-mode .btn-close-panel {
+    color: #475569;
+}
+
+body.light-mode .tweet-textarea {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    color: #0f172a;
+}
+
+body.light-mode .tweet-textarea:focus {
+    background: #ffffff;
+    border-color: var(--accent-indigo);
+}
+
+body.light-mode .character-progress-bar-wrapper {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+body.light-mode .btn-style,
+body.light-mode .hashtag-pill {
+    background: rgba(15, 23, 42, 0.03);
+    border-color: rgba(15, 23, 42, 0.08);
+    color: #475569;
+}
+
+body.light-mode .btn-style:hover,
+body.light-mode .hashtag-pill:hover {
+    background: rgba(15, 23, 42, 0.06);
+    color: #0f172a;
+}
+
+body.light-mode .btn-style.active {
+    background: rgba(99, 102, 241, 0.1);
+    color: var(--accent-indigo);
+    border-color: var(--accent-indigo);
+}
+
+body.light-mode .hashtag-pill.active {
+    background: rgba(168, 85, 247, 0.1);
+    color: var(--accent-purple);
+    border-color: var(--accent-purple);
+}

@@ -1,20 +1,31 @@
 document.addEventListener('DOMContentLoaded', () => {
     // State management
     let allUpdates = [];
+    let currentFilteredUpdates = [];
     let selectedUpdateId = null;
     let currentFilter = 'all';
     let currentSearch = '';
     let currentSort = 'desc'; // desc = newest first, asc = oldest first
     let currentTweetStyle = 'bullet'; // bullet, highlight, promo
     let selectedHashtags = new Set(['GoogleCloud', 'BigQuery']);
+    let currentTheme = localStorage.getItem('theme') || 'dark';
 
     // DOM Elements
     const refreshBtn = document.getElementById('refresh-btn');
+    const exportCsvBtn = document.getElementById('export-csv-btn');
+    const themeToggleBtn = document.getElementById('theme-toggle-btn');
+    const themeIcon = document.getElementById('theme-icon');
     const searchInput = document.getElementById('search-input');
     const sortSelect = document.getElementById('sort-select');
     const categoryFilters = document.getElementById('category-filters');
     const releasesContainer = document.getElementById('releases-container');
     const lastUpdatedSpan = document.getElementById('last-updated');
+    
+    // Apply initial theme
+    if (currentTheme === 'light') {
+        document.body.classList.add('light-mode');
+        updateThemeIcon(true);
+    }
     
     // Tweet Panel DOM Elements
     const tweetPanel = document.getElementById('tweet-panel');
@@ -34,6 +45,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Event Listeners
     refreshBtn.addEventListener('click', () => fetchReleases(true));
+    exportCsvBtn.addEventListener('click', exportToCSV);
+    themeToggleBtn.addEventListener('click', toggleTheme);
     searchInput.addEventListener('input', (e) => {
         currentSearch = e.target.value.toLowerCase();
         renderUpdates();
@@ -121,6 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Set loading state for refresh button
     function setLoadingState(loading) {
         if (loading) {
             refreshBtn.classList.add('loading');
@@ -241,6 +255,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        // Store active filtered list for CSV Export
+        currentFilteredUpdates = filtered;
+
         if (filtered.length === 0) {
             releasesContainer.innerHTML = `
                 <div class="no-results">
@@ -270,6 +287,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <span class="release-date">${update.date}</span>
                             </div>
                             <div class="card-actions">
+                                <button class="btn-card-action copy-action" title="Copy to clipboard" data-id="${update.id}">
+                                    <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                                </button>
                                 <button class="btn-card-action tweet-action" title="Tweet this update" data-id="${update.id}">
                                     <svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
                                 </button>
@@ -306,6 +326,73 @@ document.addEventListener('DOMContentLoaded', () => {
                 selectCardForTweet(updateId);
             });
         });
+
+        // Copy to clipboard button handler
+        document.querySelectorAll('.copy-action').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation(); // prevent card selection trigger
+                const updateId = btn.dataset.id;
+                copyUpdateToClipboard(updateId, btn);
+            });
+        });
+    }
+
+    function copyUpdateToClipboard(updateId, btn) {
+        const update = allUpdates.find(u => u.id === updateId);
+        if (!update) return;
+
+        const textToCopy = `[BigQuery Release - ${update.date}] (${update.category})\n${update.text}\nRead more: ${update.link}`;
+
+        navigator.clipboard.writeText(textToCopy).then(() => {
+            btn.classList.add('copied');
+            const originalSvg = btn.innerHTML;
+            btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>`;
+            
+            setTimeout(() => {
+                btn.classList.remove('copied');
+                btn.innerHTML = originalSvg;
+            }, 1500);
+        }).catch(err => {
+            console.error('Could not copy text: ', err);
+        });
+    }
+
+    function exportToCSV() {
+        if (currentFilteredUpdates.length === 0) {
+            alert('No release notes to export!');
+            return;
+        }
+
+        let csvContent = "Date,Category,Link,Description\n";
+
+        currentFilteredUpdates.forEach(update => {
+            const date = escapeCSVField(update.date);
+            const category = escapeCSVField(update.category);
+            const link = escapeCSVField(update.link);
+            const desc = escapeCSVField(update.text);
+
+            csvContent += `${date},${category},${link},${desc}\n`;
+        });
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `bigquery_release_notes_${currentFilter}_${new Date().toISOString().slice(0,10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    function escapeCSVField(field) {
+        if (field === null || field === undefined) {
+            return '""';
+        }
+        let stringVal = String(field);
+        if (stringVal.includes(',') || stringVal.includes('"') || stringVal.includes('\n') || stringVal.includes('\r')) {
+            return `"${stringVal.replace(/"/g, '""')}"`;
+        }
+        return stringVal;
     }
 
     function toggleCardSelection(updateId) {
@@ -316,6 +403,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Opens Tweet panel and handles template loading
     function selectCardForTweet(updateId) {
         selectedUpdateId = updateId;
         
@@ -441,5 +529,22 @@ document.addEventListener('DOMContentLoaded', () => {
         if (cat.includes('fix')) return '🛠️';
         if (cat.includes('announcement') || cat.includes('update')) return '📢';
         return '⚡';
+    }
+
+    function toggleTheme() {
+        const isLight = document.body.classList.toggle('light-mode');
+        currentTheme = isLight ? 'light' : 'dark';
+        localStorage.setItem('theme', currentTheme);
+        updateThemeIcon(isLight);
+    }
+
+    function updateThemeIcon(isLight) {
+        if (isLight) {
+            // Moon icon (to switch back to dark mode)
+            themeIcon.innerHTML = `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>`;
+        } else {
+            // Sun icon (to switch to light mode)
+            themeIcon.innerHTML = `<path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41l-1.06-1.06zm1.06-12.37c-.39-.39-1.02-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06c.39-.38.39-1.02 0-1.41zm-12.37 12.37c-.39-.39-1.02-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06c.39-.38.39-1.02 0-1.41z"/>`;
+        }
     }
 });
