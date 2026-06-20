@@ -55,6 +55,11 @@ body {
     line-height: 1.6;
 }
 
+/* Smooth color/theme transition properties */
+body, header, footer, .release-card, .search-input, .sort-select, .filter-badge, .tweet-panel, .btn-refresh, .custom-checkbox, .btn-card-action, .release-description code, .hashtag-pill, h1, h2, h3, p, span, a, svg {
+    transition: background-color 0.4s ease, border-color 0.4s ease, color 0.3s ease, box-shadow 0.4s ease, transform 0.2s ease, fill 0.3s ease;
+}
+
 /* Header & Navigation */
 header {
     background: rgba(9, 13, 22, 0.7);
@@ -379,7 +384,7 @@ body.tweet-panel-open .main-wrapper {
     padding: 1.5rem;
     position: relative;
     transition: var(--transition-normal);
-    cursor: pointer;
+    cursor: default;
     display: flex;
     gap: 1.25rem;
     align-items: flex-start;
@@ -406,6 +411,7 @@ body.tweet-panel-open .main-wrapper {
     align-items: center;
     justify-content: center;
     height: 24px;
+    cursor: pointer;
 }
 
 .custom-checkbox {
@@ -765,18 +771,6 @@ body.tweet-panel-open .main-wrapper {
 }
 
 /* Hashtag selections */
-.hashtag-section {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.hashtags-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-}
-
 .hashtag-pill {
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid var(--border-color);
@@ -1078,4 +1072,124 @@ body.light-mode .hashtag-pill.active {
     background: rgba(168, 85, 247, 0.1);
     color: var(--accent-purple);
     border-color: var(--accent-purple);
+}
+
+/* Toast Notifications */
+.toast-container {
+    position: fixed;
+    bottom: 24px;
+    left: 24px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 380px;
+    width: calc(100% - 48px);
+    pointer-events: none;
+}
+
+.toast {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-left: 4px solid var(--accent-indigo);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    color: var(--text-primary);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    pointer-events: auto;
+    animation: toast-slide-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards,
+               toast-fade-out 0.3s ease 2.7s forwards;
+}
+
+.toast.success {
+    border-left-color: var(--cat-feature);
+}
+
+.toast.error {
+    border-left-color: var(--cat-deprecation);
+}
+
+.toast.info {
+    border-left-color: var(--accent-purple);
+}
+
+.toast-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+}
+
+.toast-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.toast.success .toast-icon svg {
+    fill: var(--cat-feature);
+}
+
+.toast.error .toast-icon svg {
+    fill: var(--cat-deprecation);
+}
+
+.toast.info .toast-icon svg {
+    fill: var(--accent-purple);
+}
+
+.toast-message {
+    font-size: 0.9rem;
+    font-weight: 500;
+    line-height: 1.4;
+    flex-grow: 1;
+}
+
+/* Light Mode Toast */
+body.light-mode .toast {
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-left: 4px solid var(--accent-indigo);
+    color: var(--text-primary);
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+}
+
+body.light-mode .toast.success {
+    border-left-color: var(--cat-feature);
+}
+
+body.light-mode .toast.error {
+    border-left-color: var(--cat-deprecation);
+}
+
+body.light-mode .toast.info {
+    border-left-color: var(--accent-purple);
+}
+
+@keyframes toast-slide-in {
+    from {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes toast-fade-out {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(-20px);
+        opacity: 0;
+    }
 }

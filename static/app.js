@@ -113,6 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (data.error) {
                 showError(data.error);
+                showToast(`Failed to load release notes: ${data.error}`, 'error');
                 return;
             }
             
@@ -126,15 +127,18 @@ document.addEventListener('DOMContentLoaded', () => {
             
             renderFilters();
             renderUpdates();
+            if (force) {
+                showToast('Release notes updated successfully!', 'success');
+            }
         } catch (error) {
             showError('Failed to connect to the server. Please ensure the Flask app is running.');
+            showToast('Connection error. Is the server running?', 'error');
             console.error(error);
         } finally {
             setLoadingState(false);
         }
     }
 
-    // Set loading state for refresh button
     function setLoadingState(loading) {
         if (loading) {
             refreshBtn.classList.add('loading');
@@ -145,7 +149,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Show error state inside container
     function showError(msg) {
         releasesContainer.innerHTML = `
             <div class="no-results" style="border-color: rgba(239, 68, 68, 0.3);">
@@ -263,9 +266,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="no-results">
                     <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
                     <h3>No release notes match your criteria</h3>
-                    <p style="margin-top: 0.5rem; font-size: 0.9rem;">Try adjusting your filters or search terms.</p>
+                    <p style="margin-top: 0.5rem; font-size: 0.9rem; margin-bottom: 1.25rem;">Try adjusting your filters or search terms.</p>
+                    <button id="clear-filters-btn" class="btn-refresh" style="margin: 0 auto; background: rgba(99, 102, 241, 0.1); border: 1px solid var(--accent-indigo); color: var(--accent-indigo); box-shadow: none;">
+                        <span>Clear Filters & Search</span>
+                    </button>
                 </div>
             `;
+            const clearBtn = document.getElementById('clear-filters-btn');
+            if (clearBtn) {
+                clearBtn.addEventListener('click', clearFiltersAndSearch);
+            }
             return;
         }
 
@@ -309,9 +319,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Attach Card Click Handlers
         document.querySelectorAll('.release-card').forEach(card => {
             card.addEventListener('click', (e) => {
-                // If a button inside the card is clicked, don't trigger selection
-                if (e.target.closest('.btn-card-action')) return;
-                if (e.target.closest('a')) return; // let links work normally
+                // Selection should only trigger when clicking the select column/checkbox
+                if (!e.target.closest('.card-select-column')) return;
                 
                 const updateId = card.dataset.id;
                 toggleCardSelection(updateId);
@@ -348,18 +357,21 @@ document.addEventListener('DOMContentLoaded', () => {
             const originalSvg = btn.innerHTML;
             btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>`;
             
+            showToast('Copied update to clipboard!', 'success');
+            
             setTimeout(() => {
                 btn.classList.remove('copied');
                 btn.innerHTML = originalSvg;
             }, 1500);
         }).catch(err => {
             console.error('Could not copy text: ', err);
+            showToast('Failed to copy to clipboard.', 'error');
         });
     }
 
     function exportToCSV() {
         if (currentFilteredUpdates.length === 0) {
-            alert('No release notes to export!');
+            showToast('No release notes to export!', 'error');
             return;
         }
 
@@ -382,6 +394,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        showToast(`Exported ${currentFilteredUpdates.length} updates to CSV!`, 'success');
     }
 
     function escapeCSVField(field) {
@@ -403,7 +416,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Opens Tweet panel and handles template loading
     function selectCardForTweet(updateId) {
         selectedUpdateId = updateId;
         
@@ -531,6 +543,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return '⚡';
     }
 
+    // Toggle stylesheet theme classes
     function toggleTheme() {
         const isLight = document.body.classList.toggle('light-mode');
         currentTheme = isLight ? 'light' : 'dark';
@@ -546,5 +559,51 @@ document.addEventListener('DOMContentLoaded', () => {
             // Sun icon (to switch to light mode)
             themeIcon.innerHTML = `<path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41l-1.06-1.06zm1.06-12.37c-.39-.39-1.02-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06c.39-.38.39-1.02 0-1.41zm-12.37 12.37c-.39-.39-1.02-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06c.39-.38.39-1.02 0-1.41z"/>`;
         }
+    }
+
+    // Show dynamic toast notification
+    function showToast(message, type = 'success') {
+        const toastContainer = document.getElementById('toast-container');
+        if (!toastContainer) return;
+
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+
+        let iconSvg = '';
+        if (type === 'success') {
+            iconSvg = `<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>`;
+        } else if (type === 'error') {
+            iconSvg = `<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>`;
+        } else {
+            iconSvg = `<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 11h-2V7h2v6zm0 4h-2v-2h2v2z"/></svg>`;
+        }
+
+        const iconContainer = document.createElement('div');
+        iconContainer.className = 'toast-icon';
+        iconContainer.innerHTML = iconSvg;
+
+        const messageContainer = document.createElement('div');
+        messageContainer.className = 'toast-message';
+        messageContainer.textContent = message;
+
+        toast.appendChild(iconContainer);
+        toast.appendChild(messageContainer);
+        toastContainer.appendChild(toast);
+
+        // Auto remove
+        setTimeout(() => {
+            toast.remove();
+        }, 3000);
+    }
+
+    // Reset filters and search
+    function clearFiltersAndSearch() {
+        searchInput.value = '';
+        currentSearch = '';
+        currentFilter = 'all';
+        
+        renderFilters();
+        renderUpdates();
+        showToast('Filters and search cleared!', 'info');
     }
 });
